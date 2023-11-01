@@ -1,7 +1,6 @@
 # Some packages that may be useful
-import tensorflow.keras as k  # For general machine learning tools
-import tensorflow.keras.layers as kl  # For building the networks
-import tensorflow.keras.optimizers as ko  # Tools for initializing and training built networks
+from VideoGPT.scripts import train_vqvae, train_videogpt  # Training scripts for VideoGPT
+from VideoGPT.videogpt import gpt, resnet, utils, vqvae  # Model definitions for VideoGPT
 import numpy as np
 from abc import ABC, abstractmethod  # For defining the general structure of a model class
 

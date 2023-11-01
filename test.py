@@ -27,6 +27,7 @@ predicted_frames = g.predict(features)
 classification = c.predict(features)
 
 # Quantify performance
+# Look at evaluation metrics used by https://github.com/wilson1yan/VideoGPT for generative network performance
 testing_functions.classification_accuracy(classification, test_data)
 # etc.
 

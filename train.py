@@ -1,6 +1,6 @@
 # Some packages that may be useful
 import numpy as np
-import tensorflow.keras as k
+from VideoGPT.scripts import train_videogpt, train_vqvae  # For training VideoGPT
 
 from models import encoder, decoder, generational_network, classification_network
 import data_handling

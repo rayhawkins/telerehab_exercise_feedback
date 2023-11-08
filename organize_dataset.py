@@ -36,9 +36,9 @@ from scipy.ndimage import zoom
 parent_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\video_data"
 save_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data_resized"
 perc_test = 10
-max_frames = 16
+max_frames = None
 group_by_symmetry = False
-rescale_size = (16, 200, 200, 3)  # (t, h, w, c)
+rescale_size = (None, 200, 200, 3)  # (t, h, w, c)
 fps = 5  # fps for saving, fps of the original dataset collected from the kinect sensor was 30 fps
 
 np.random.seed(1234)
@@ -97,15 +97,21 @@ for subfolder in os.listdir(parent_folder):
             imgs[f, :, :, :] = img
 
         # Resize if requested
-        if rescale_size is not None:  # Rescaling is VERY slow this way
+        if rescale_size is not None and rescale_size[0] is not None:  # 3D rescaling using zoom, very slow
             imgs = zoom(imgs, [rescale_size[i]/imgs.shape[i] for i in range(len(rescale_size))], mode='nearest')
+            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[1], imgs.shape[2]])
+        elif rescale_size is not None and rescale_size[0] is None:
+            imgs = np.array([cv2.resize(this_frame, dsize=rescale_size[1:3], interpolation=cv2.INTER_CUBIC)
+                             for this_frame in imgs])
+            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[1], imgs.shape[2]])
+        else:
+            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[2], imgs.shape[1]])
 
         if max_frames is not None:
             stop_frame = min(max_frames, len(imgs))
         else:
             stop_frame = len(imgs)
 
-        video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[1], imgs.shape[2]])
         for img in imgs:
             video.write(img)
         video.release()

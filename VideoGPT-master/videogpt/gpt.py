@@ -26,7 +26,7 @@ class VideoGPT(pl.LightningModule):
         if not os.path.exists(args.vqvae):
             self.vqvae = load_vqvae(args.vqvae)
         else:
-            self.vqvae =  VQVAE.load_from_checkpoint(args.vqvae)
+            self.vqvae = VQVAE.load_from_checkpoint(args.vqvae)
         for p in self.vqvae.parameters():
             p.requires_grad = False
         self.vqvae.codebook._need_init = False

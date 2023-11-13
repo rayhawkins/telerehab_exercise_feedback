@@ -26,7 +26,7 @@ def main():
     model = VQVAE(args)
 
     callbacks = []
-    callbacks.append(ModelCheckpoint(monitor='val/recon_loss', mode='min'))
+    callbacks.append(ModelCheckpoint(monitor='val/recon_loss', mode='min', save_top_k=-1))
 
     kwargs = dict()
     if args.gpus > 1:

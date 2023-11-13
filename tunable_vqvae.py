@@ -8,8 +8,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributed as dist
 
-from .attention import MultiHeadAttention
-from .utils import shift_dim
+import sys
+sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
+from videogpt.attention import MultiHeadAttention
+from videogpt.utils import shift_dim
 
 class VQVAE(pl.LightningModule):
     def __init__(self, args):
@@ -55,19 +57,20 @@ class VQVAE(pl.LightningModule):
 
         return recon_loss, x_recon, vq_output
 
-    def training_step(self, batch, batch_idx):
-        x = batch['video']
+    def training_step(self, x, label, batch_idx):
         recon_loss, _, vq_output = self.forward(x)
         commitment_loss = vq_output['commitment_loss']
         loss = recon_loss + commitment_loss
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        x = batch['video']
+    def validation_step(self, x, label, batch_idx):
         recon_loss, _, vq_output = self.forward(x)
         self.log('val/recon_loss', recon_loss, prog_bar=True)
         self.log('val/perplexity', vq_output['perplexity'], prog_bar=True)
         self.log('val/commitment_loss', vq_output['commitment_loss'], prog_bar=True)
+        commitment_loss = vq_output['commitment_loss']
+        loss = recon_loss + commitment_loss
+        return loss
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.args.lr, betas=(0.9, 0.999))

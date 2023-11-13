@@ -33,11 +33,12 @@ from tqdm import tqdm
 import cv2
 from scipy.ndimage import zoom
 
-parent_folder = r"C:\Users\Ray\Documents\MASc\BME1570\Data\og_data"
-save_folder = r"C:\Users\Ray\Documents\MASc\BME1570\Data\symmetry_sorted_data"
+parent_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\video_data"
+save_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data_gray"
 perc_test = 10
 max_frames = None
-group_by_symmetry = True
+group_by_symmetry = False
+grayscale = True  # set to true if to save videos as grayscale i.e. (t, h, w, 1)
 rescale_size = None  # (16, 200, 200, 3)  # (t, h, w, c)
 fps = 5  # fps for saving, fps of the original dataset collected from the kinect sensor was 30 fps
 
@@ -93,22 +94,30 @@ for subfolder in os.listdir(parent_folder):
             frame_path = os.path.join(video_folder_path, frame)
             img = cv2.imread(frame_path)
             if f == 0:  # Initialize storage for the images based on shape and dtype of the frames
-                imgs = np.zeros([len(frame_paths), img.shape[0], img.shape[1], img.shape[2]], dtype=img.dtype)
-            imgs[f, :, :, :] = img
+                if grayscale:
+                    imgs = np.zeros([len(frame_paths), img.shape[0], img.shape[1]], dtype=img.dtype)
+                else:
+                    imgs = np.zeros([len(frame_paths), img.shape[0], img.shape[1], img.shape[2]], dtype=img.dtype)
+            if grayscale:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                imgs[f, :, :] = img
+            else:
+                imgs[f, :, :, :] = img
 
         # Resize if requested
         if rescale_size is not None:  # Rescaling is VERY slow this way
             imgs = zoom(imgs, [rescale_size[i]/imgs.shape[i] for i in range(len(rescale_size))], mode='nearest')
-            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[1], imgs.shape[2]])
+            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps,
+                                    [imgs.shape[1], imgs.shape[2]], not grayscale)
         else:
-            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[2], imgs.shape[1]])
+            video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps,
+                                    [imgs.shape[2], imgs.shape[1]], not grayscale)
 
         if max_frames is not None:
             stop_frame = min(max_frames, len(imgs))
         else:
             stop_frame = len(imgs)
 
-        video = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, [imgs.shape[2], imgs.shape[1]])
         for img in imgs:
             video.write(img)
         video.release()

@@ -10,9 +10,13 @@ import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_scheduler
 import pytorch_lightning as pl
 
-from .resnet import resnet34
-from .attention import AttentionStack, LayerNorm, AddBroadcastPosEmbed
-from .utils import shift_dim
+import sys
+sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
+from videogpt.resnet import resnet34
+from videogpt.attention import AttentionStack, LayerNorm, AddBroadcastPosEmbed
+from videogpt.utils import shift_dim
+from videogpt.vqvae import VQVAE
+from videogpt.download import load_vqvae
 
 
 class VideoGPT(pl.LightningModule):
@@ -21,8 +25,6 @@ class VideoGPT(pl.LightningModule):
         self.args = args
 
         # Load VQ-VAE and set all parameters to no grad
-        from .vqvae import VQVAE
-        from .download import load_vqvae
         if not os.path.exists(args.vqvae):
             self.vqvae = load_vqvae(args.vqvae)
         else:
@@ -115,6 +117,7 @@ class VideoGPT(pl.LightningModule):
 
         return samples  # BCTHW in [0, 1]
 
+
     def forward(self, x, targets, cond, decode_step=None, decode_idx=None):
         if self.use_frame_cond:
             if decode_step is None:
@@ -134,13 +137,11 @@ class VideoGPT(pl.LightningModule):
 
         return loss, logits
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, x, label, batch_idx):
         self.vqvae.eval()
-        x = batch['video']
 
         cond = dict()
         if self.args.class_cond:
-            label = batch['label']
             cond['class_cond'] = F.one_hot(label, self.args.class_cond_dim).type_as(x)
         if self.use_frame_cond:
             cond['frame_cond'] = x[:, :, :self.args.n_cond_frames]
@@ -152,15 +153,16 @@ class VideoGPT(pl.LightningModule):
         loss, _ = self(x, targets, cond)
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        loss = self.training_step(batch, batch_idx)
+    def validation_step(self, x, label, batch_idx):
+        loss = self.training_step(x, label, batch_idx)
         self.log('val/loss', loss, prog_bar=True)
+        return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=3e-4, betas=(0.9, 0.999))
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.args.lr, betas=(0.9, 0.999))
         assert hasattr(self.args, 'max_steps') and self.args.max_steps is not None, f"Must set max_steps argument"
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer, self.args.max_steps)
-        return [optimizer], [dict(scheduler=scheduler, interval='step', frequency=1)]
+        # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, self.args.max_steps)  # can't use with tuning scheduler
+        return [optimizer]   # , [dict(scheduler=scheduler, interval='step', frequency=1)]
 
 
     @staticmethod
@@ -179,5 +181,6 @@ class VideoGPT(pl.LightningModule):
         parser.add_argument('--attn_type', type=str, default='full',
                             choices=['full', 'sparse'])
         parser.add_argument('--attn_dropout', type=float, default=0.3)
+        parser.add_argument('--lr', type=float, default=7e-4)
 
         return parser

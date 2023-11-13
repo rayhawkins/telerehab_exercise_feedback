@@ -27,6 +27,7 @@ def main():
     args.class_cond_dim = data.n_classes if args.class_cond else None
     model = VideoGPT(args)
 
+
     callbacks = []
     callbacks.append(ModelCheckpoint(monitor='val/loss', mode='min', save_top_k=-1))
 

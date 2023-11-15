@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.nn import Module
 from torch.nn import flatten
 import torch.optim as optim
 
@@ -9,7 +8,7 @@ sys.path.append('/Users/owner/Documents/BME Fall2023/BME1570/Assignment 3/telere
 from videogpt.vqvae import VQVAE
 import argparse
 
-class classification_network(Module):
+class classification_network(nn.Module):
     def __init__(self, args):
 
         # Load VQ-VAE and set all parameters to no grad

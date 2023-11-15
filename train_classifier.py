@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 import sys
 sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
 from tunable_data import VideoData
-from classifier import Classifier
+from transformer_classifier import Classifier
 
 
 def train_classifier(num_epochs, config, data_dir=None):

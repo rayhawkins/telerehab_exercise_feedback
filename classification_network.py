@@ -18,7 +18,7 @@ class classification_network(nn.Module):
         self.vqvae.codebook._need_init = False
         self.vqvae.eval()
 
-        super(classification_network, self).__init__(in_channels, classes)
+        super(classification_network, self).__init__(input_channels, classes)
 
 
         # Transformer classifier
@@ -30,9 +30,9 @@ class classification_network(nn.Module):
         self.maxpool1 = nn.MaxPool2d(kernel_size=self.args.kernel_size)
 
         # Second convolutional layer
-        self.vqvae.conv2 = nn.Conv2d(in_channels=self.in_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
-        self.vqvae.relu2 = nn.ReLU()
-        self.vqvae.maxpool2 = nn.MaxPool2d(kernel_size=self.args.kernel_size)
+        self.conv2 = nn.Conv2d(in_channels=self.in_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
+        self.relu2 = nn.ReLU()
+        self.maxpool2 = nn.MaxPool2d(kernel_size=self.args.kernel_size)
         # Linear classifier
         self.linear1 = nn.Linear(in_features=self.args.in_features, out_features=self.classes)
         self.relu3 = nn.ReLU()
@@ -62,9 +62,9 @@ class classification_network(nn.Module):
         # Pass output through the softmax classifier
 
         z = self.Linear2(z)
-        out = self.logSoftmax(z)
+        z = self.logSoftmax(z)
 
-        return out
+        return z
 
     @staticmethod
     def add_model_specific_args(parent_parser):

@@ -79,7 +79,8 @@ def create_confusion_matrix(ground_truth, prediction):
     # plt.figure(figsize=(12, 7))
     # sn.heatmap(df_cm, annot=True)
     # plt.savefig('output.png')
-
+classes = ('EFR', 'EFL', 'SFR', 'SFL', 'SAR',
+        'SAL', 'SFE', 'STR', 'STL')
 def plot_confusion_matrix(cf_matrix):
     # Create a confusion matrix plot from the matrix of confusion values
     df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])

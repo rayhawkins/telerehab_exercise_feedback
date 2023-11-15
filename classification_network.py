@@ -18,11 +18,11 @@ class classification_network(nn.Module):
         self.vqvae.codebook._need_init = False
         self.vqvae.eval()
 
-        super(classification_network, self).__init__(input_channels, classes)
+        super(classification_network, self).__init__(in_channels, classes)
 
 
         # Transformer classifier
-        self.input_channels = self.vqvae.input_channels
+        self.in_channels = self.vqvae.in_channels
 
         # First convolutional layer
         self.conv1 = nn.Conv2d(in_channels=self.in_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
@@ -73,7 +73,9 @@ class classification_network(nn.Module):
                             help='path to vqvae ckpt, or model name to download pretrained')
         parser.add_argument('--in_channels', type=int, default=2)
         parser.add_argument('--classes', type=int, default=2)
-        parser.add_argument('--out_channels', type=int, default=2)
+        parser.add_argument('--out_channels', type=int, default=8)
+        parser.add_argument('--in_features', type=int, default=2)
+        parser.add_argument('--out_features', type=int, default=2)
         parser.add_argument('--kernel_size', type=int, default=576)
         parser.add_argument('--lr', type=float, default=3e-4)
 

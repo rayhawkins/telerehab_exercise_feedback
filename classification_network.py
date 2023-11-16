@@ -43,22 +43,22 @@ class Classifier2(nn.Module):
         self.save_hyperparameters()
 
     def forward(self, z):
-        # pass the input through the first layer
+        # Pass the input through the first layer
         z = self.conv1(z)
         z = self.relu1(z)
         z = self.maxpool1(z)
 
-        # pass the output through previous layer through the second layer
+        # Pass the output through previous layer through the second layer
         z = self.conv2(z)
         z = self.relu2(z)
         z = self.maxpool2(z)
 
-        # flatten the output from the previous layer and pass it
+        # Flatten the output from the previous layer and pass it
         z = flatten(z, 1)
         z = self.FC1(z)
         z = self.relu3(z)
 
-        # Pass output through the softmax classifier
+        # Pass the output through the softmax classifier
 
         z = self.FC2(z)
         z = self.logSoftmax(z)

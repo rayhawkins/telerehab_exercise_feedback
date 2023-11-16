@@ -4,11 +4,11 @@ from torch.nn import flatten
 import torch.optim as optim
 import argparse
 import sys
-sys.path.append('/Users/owner/Documents/BME Fall2023/BME1570/Assignment 3/telerehab_exercise_feedback/VideoGPT-master')
+sys.path.append(r'C:\Users\Ray\Documents\MASc\BME1570\code\telerehab_exercise_feedback\VideoGPT-master')
 from videogpt.vqvae import VQVAE
 
 
-class Classifier2(nn.Module):
+class Classifier(nn.Module):
     def __init__(self, args):
         self.args = args
 
@@ -19,25 +19,25 @@ class Classifier2(nn.Module):
         self.vqvae.codebook._need_init = False
         self.vqvae.eval()
 
-        super(Classifier2, self).__init__(in_channels, classes)
-    # Transformer classifier
         self.in_channels = self.vqvae.in_channels
+        super(Classifier, self).__init__(self.in_channels, args.n_classes)
 
         # First convolutional layer
-        self.conv1 = nn.Conv2d(in_channels=self.in_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
         self.relu1 = nn.ReLU()
         self.maxpool1 = nn.MaxPool2d(kernel_size=self.args.kernel_size)
 
         # Second convolutional layer
-        self.conv2 = nn.Conv2d(in_channels=self.in_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
+        self.conv2 = nn.Conv2d(in_channels=self.args.out_channels, out_channels=self.args.out_channels, kernel_size=self.args.kernel_size)
         self.relu2 = nn.ReLU()
         self.maxpool2 = nn.MaxPool2d(kernel_size=self.args.kernel_size)
+
         # Linear classifier
-        self.FC1 = nn.Linear(in_features=self.args.in_features, out_features=classes)
+        self.FC1 = nn.Linear(in_features=self.maxpool2.shape, out_features=self.args.n_classes)
         self.relu3 = nn.ReLU()
 
         # Softmax classifier
-        self.FC2 = nn.Linear(in_features=self.args.in_features, out_features=classes)
+        self.FC2 = nn.Linear(in_features=self.maxpool2.shape, out_features=self.args.n_classes)
         self.logSoftmax = nn.LogSoftmax(dim=1)
 
         self.save_hyperparameters()
@@ -59,7 +59,6 @@ class Classifier2(nn.Module):
         z = self.relu3(z)
 
         # Pass the output through the softmax classifier
-
         z = self.FC2(z)
         z = self.logSoftmax(z)
 
@@ -70,16 +69,13 @@ class Classifier2(nn.Module):
         parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--vqvae', type=str, default='kinetics_stride4x4x4',
                             help='path to vqvae ckpt, or model name to download pretrained')
-        parser.add_argument('--in_channels', type=int, default=2)
-        parser.add_argument('--classes', type=int, default=2)
+        parser.add_argument('--n_classes', type=int, default=2)
         parser.add_argument('--out_channels', type=int, default=8)
-        parser.add_argument('--in_features', type=int, default=2)
-        parser.add_argument('--out_features', type=int, default=2)
         parser.add_argument('--kernel_size', type=tuple, default=(3,3))
         parser.add_argument('--lr', type=float, default=3e-4)
 
 # Define loss function and optimizer
-def loss_optimizer(self):
-    loss_function = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(self.parameters(), lr=self.args.lr, betas=(0.9, 0.999))
-    return loss_function, optimizer
+    def loss_optimizer(self):
+        loss_function = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(self.parameters(), lr=self.args.lr, betas=(0.9, 0.999))
+        return loss_function, optimizer

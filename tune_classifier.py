@@ -4,7 +4,8 @@ import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from transformer_classifier import Classifier
+from transformer_classifier import Classifier as TransformerClassifier
+from convolutional_classifier import Classifier as ConvolutionalClassifier
 from tunable_data import VideoData
 from functools import partial
 from ray import tune
@@ -17,12 +18,15 @@ import os
 import warnings
 
 
-def train_classifier(num_epochs, config, data_dir=None):
+def train_classifier(num_epochs, config, data_dir=None, model_type="convolutional"):
     # Create the argument parser with all of the arguments that the model will need
     pl.seed_everything(1234)
     parser = argparse.ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
-    parser = Classifier.add_model_specific_args(parser)
+    if model_type == "convolutional":
+        parser = ConvolutionalClassifier.add_model_specific_args(parser)
+    else:
+        parser = TransformerClassifier.add_model_specific_args(parser)
     parser.add_argument('--data_path', type=str, required=True)
     parser.add_argument('--sequence_length', type=int, default=16)
     parser.add_argument('--batch_size', type=int, default=8)
@@ -50,7 +54,10 @@ def train_classifier(num_epochs, config, data_dir=None):
     args.n_classes = data.n_classes
 
     print("Instantiating model ...")
-    model = Classifier(args)
+    if model_type == "convolutional":
+        model = ConvolutionalClassifier(args)
+    else:
+        model = TransformerClassifier(args)
     criterion = nn.CrossEntropyLoss()
 
     # Set training to GPU
@@ -152,21 +159,36 @@ def train_classifier(num_epochs, config, data_dir=None):
     print("Finished Training")
 
 
-def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, resolution=64, vqvae_path=None):
+def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, resolution=64, vqvae_path=None,
+         model_type="convolutional"):
     # Initialize random seed
     pl.seed_everything(1234)
 
-    # Create the tunable arguments
+    # Create the tunable arguments for the convolutional classifier
     config = {
         "--vqvae": vqvae_path,
         "--batch_size": tune.choice([8, 16, 32]),
         "--sequence_length": sequence_length,
-        "--lr": tune.uniform(1e-4, 7e-4),
+        "--lr": tune.uniform(1e-4, 8e-4),
+        "--kernel_size": tune.choice([32, 64, 128]),
+        "--max_epochs": str(max_num_epochs),
+        "--n_classes": 8,
+        "--out_channels": [1, 3]
+    }
+
+    # Create the tunable arguments for the transformer classifier
+    """
+    config = {
+        "--vqvae": vqvae_path,
+        "--batch_size": tune.choice([8, 16, 32]),
+        "--sequence_length": sequence_length,
+        "--lr": tune.uniform(1e-4, 8e-4),
         "--n_heads": tune.choice([2, 4, 8]),
         "--max_epochs": str(max_num_epochs),
         "--n_layers": tune.choice([2, 4, 8]),
         "--dim_feedforward": tune.choice([256, 512, 1024, 2048])
     }
+    """
 
     print("Configuring scheduler ...")
     scheduler = ASHAScheduler(
@@ -179,7 +201,7 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
 
     print("Running tune ...")
     result = tune.run(
-        partial(train_classifier, data_dir=data_path),
+        partial(train_classifier, data_dir=data_path, model_type=model_type),
         resources_per_trial={"cpu": 16, "gpu": 1},
         config=config,
         num_samples=num_samples,
@@ -195,7 +217,8 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
 if __name__ == '__main__':
     data_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data"
     vqvae_path = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master\lightning_logs\version_23\checkpoints\epoch=60-step=188489.ckpt"
+    model_type = "convolutional"
     sequence_length = 16  # must be same sequence length as used for vqvae
     main(num_samples=10, max_num_epochs=10, data_path=data_folder,
-         sequence_length=sequence_length, vqvae_path=vqvae_path)
+         sequence_length=sequence_length, vqvae_path=vqvae_path, model_type=model_type)
 

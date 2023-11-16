@@ -7,10 +7,11 @@ import pytorch_lightning as pl
 import sys
 sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
 from tunable_data import VideoData
-from transformer_classifier import Classifier
+from transformer_classifier import Classifier as TransformerClassifier
+from convolutional_classifier import Classifier as ConvolutionalClassifier
 
 
-def train_classifier(num_epochs, config, data_dir=None):
+def train_classifier(num_epochs, config, data_dir=None, model_type='convolutional'):
     parser = argparse.ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
     parser.add_argument('--data_path', type=str, default='/home/wilson/data/datasets/bair.hdf5')
@@ -37,7 +38,10 @@ def train_classifier(num_epochs, config, data_dir=None):
     val_loader = data.val_dataloader()
     args.n_classes = data.n_classes
 
-    model = Classifier(args)
+    if model_type == 'convolutional':
+        model = ConvolutionalClassifier(args)
+    else:
+        model = TransformerClassifier(args)
     criterion = nn.CrossEntropyLoss()
 
     # Set training to GPU
@@ -103,16 +107,30 @@ def train_classifier(num_epochs, config, data_dir=None):
 
 
 
-def main(num_epochs, args, data_dir):
+def main(num_epochs, args, data_dir, model_type):
     torch.manual_seed(1234)
-    final_model = train_classifier(num_epochs, args, data_dir)
+    final_model = train_classifier(num_epochs, args, data_dir, model_type)
 
 if __name__ == '__main__':
     data_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data"
+    model_type = "convolutional"
+
+    # Config dict for convolutional classifier
+    config = {
+        "kernel_size": 64,
+        "out_channels": 3,
+        "n_classes": 8,
+        "lr": 8e-4
+    }
+
+    # Config dict for transformer classifier
+    """
     config = {
         "n_heads": 4,
         "dim_feedforward": 2048,
         "dropout": 0.2,
-        "num_layers": 4
+        "num_layers": 4,
+        "lr": 8e-4
     }
-    main(num_epochs=50, args=config, data_path=data_folder)
+    """
+    main(num_epochs=50, args=config, data_path=data_folder, model_type=model_type)

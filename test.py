@@ -29,7 +29,24 @@ classification = c.predict(features)
 # Quantify performance
 # Look at evaluation metrics used by https://github.com/wilson1yan/VideoGPT for generative network performance
 testing_functions.classification_accuracy(classification, test_data)
-# etc.
+testing_functions.classification_f1score(classification, test_data)
+testing_functions.prediction_pixelwise_accuracy(classification, test_data)
+
+
+#confusion matrix for 9 classes classification
+testing_functions.create_confusion_matrix(ground_truth_all, prediction_all)
+
+#Confusion matrix for Binary classification - we need to repeat this line, 9 times for creating 9 confusion matrices for all classes
+testing_functions.create_confusion_matrix(ground_truth_EFR, prediction_EFR)
+testing_functions.create_confusion_matrix(ground_truth_EFL, prediction_EFL)
+testing_functions.create_confusion_matrix(ground_truth_SFR, prediction_SFR)
+testing_functions.create_confusion_matrix(ground_truth_SFL, prediction_SFL)
+testing_functions.create_confusion_matrix(ground_truth_SAR, prediction_SAR)
+testing_functions.create_confusion_matrix(ground_truth_SAL, prediction_SAL)
+testing_functions.create_confusion_matrix(ground_truth_SFE, prediction_SFE)
+testing_functions.create_confusion_matrix(ground_truth_STR, prediction_STR)
+testing_functions.create_confusion_matrix(ground_truth_STL, prediction_STL)
+
 
 # Save the results in some format (as .csv from pandas table maybe?)
 

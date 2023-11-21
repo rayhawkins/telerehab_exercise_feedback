@@ -36,7 +36,7 @@ def main():
         # find_unused_parameters = False to support gradient checkpointing
         kwargs = dict(distributed_backend='ddp', gpus=args.gpus,
                       plugins=[pl.plugins.DDPPlugin(find_unused_parameters=False)])
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks,
+    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, auto_lr_find=True,
                                             max_steps=args.max_steps, **kwargs)
 
     trainer.fit(model, data)

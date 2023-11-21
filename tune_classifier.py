@@ -18,7 +18,8 @@ import os
 import warnings
 
 
-def train_classifier(num_epochs, config, data_dir=None, model_type="convolutional"):
+def train_classifier(config, data_dir=None, model_type="convolutional", num_epochs=10):
+    print(model_type)
     # Create the argument parser with all of the arguments that the model will need
     pl.seed_everything(1234)
     parser = argparse.ArgumentParser()
@@ -31,6 +32,7 @@ def train_classifier(num_epochs, config, data_dir=None, model_type="convolutiona
     parser.add_argument('--sequence_length', type=int, default=16)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--num_workers', type=int, default=8)
+    parser.add_argument('--resolution', type=int, default=128)
 
     config_args = []
     for key in config.keys():
@@ -100,7 +102,7 @@ def train_classifier(num_epochs, config, data_dir=None, model_type="convolutiona
             torch.nn.utils.clip_grad_norm(model.parameters(), 0.5)
 
             optimizer.step()
-            losses.append(epoch_loss)
+            losses.append(loss)
 
             correct = predictions.argmax(axis=1) == label
             epoch_correct += correct.sum().item()
@@ -120,20 +122,21 @@ def train_classifier(num_epochs, config, data_dir=None, model_type="convolutiona
         val_epoch_correct = 0
         val_epoch_count = 0
         val_steps = 0
+        val_loss = 0
         for idx, batch in enumerate(val_loader):
             # Send batch to the gpu
             video, label = batch["video"], batch["label"]
             video, label = video.to(device), label.to(device)
             with torch.no_grad():
                 predictions = model(video)
-                val_loss = criterion(predictions, label)
+                val_loss += criterion(predictions, label).cpu().numpy()
                 val_steps += 1
 
                 correct = predictions.argmax(axis=1) == label
 
                 val_epoch_correct += correct.sum().item()
                 val_epoch_count += correct.size(0)
-                val_epoch_loss += loss.item()
+                val_epoch_loss += val_loss.item()
 
         print(f"{epoch_loss=}")
         print(f"epoch accuracy: {epoch_correct / epoch_count}")
@@ -165,6 +168,7 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
     pl.seed_everything(1234)
 
     # Create the tunable arguments for the convolutional classifier
+    """
     config = {
         "--vqvae": vqvae_path,
         "--batch_size": tune.choice([8, 16, 32]),
@@ -173,11 +177,12 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
         "--kernel_size": tune.choice([32, 64, 128]),
         "--max_epochs": str(max_num_epochs),
         "--n_classes": 8,
-        "--out_channels": [1, 3]
+        "--out_channels": [1, 3],
+        "--resolution": resolution,
     }
+    """
 
     # Create the tunable arguments for the transformer classifier
-    """
     config = {
         "--vqvae": vqvae_path,
         "--batch_size": tune.choice([8, 16, 32]),
@@ -186,9 +191,9 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
         "--n_heads": tune.choice([2, 4, 8]),
         "--max_epochs": str(max_num_epochs),
         "--n_layers": tune.choice([2, 4, 8]),
-        "--dim_feedforward": tune.choice([256, 512, 1024, 2048])
+        "--dim_feedforward": tune.choice([256, 512, 1024, 2048]),
+        "--resolution": resolution,
     }
-    """
 
     print("Configuring scheduler ...")
     scheduler = ASHAScheduler(
@@ -201,7 +206,7 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
 
     print("Running tune ...")
     result = tune.run(
-        partial(train_classifier, data_dir=data_path, model_type=model_type),
+        partial(train_classifier, data_dir=data_path, model_type=model_type, num_epochs=max_num_epochs),
         resources_per_trial={"cpu": 16, "gpu": 1},
         config=config,
         num_samples=num_samples,
@@ -217,8 +222,9 @@ def main(num_samples=10, max_num_epochs=10, data_path=None, sequence_length=16, 
 if __name__ == '__main__':
     data_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data"
     vqvae_path = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master\lightning_logs\version_23\checkpoints\epoch=60-step=188489.ckpt"
-    model_type = "convolutional"
+    model_type = "transformer"
     sequence_length = 16  # must be same sequence length as used for vqvae
-    main(num_samples=10, max_num_epochs=10, data_path=data_folder,
+    resolution = 128  # must be the same resolution as used for vqvae
+    main(num_samples=10, max_num_epochs=10, data_path=data_folder, resolution=resolution,
          sequence_length=sequence_length, vqvae_path=vqvae_path, model_type=model_type)
 

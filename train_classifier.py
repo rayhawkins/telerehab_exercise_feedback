@@ -3,6 +3,7 @@ import torch.nn as nn
 import argparse
 import torch.nn.functional as F
 import pytorch_lightning as pl
+import os
 
 import sys
 sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
@@ -19,6 +20,11 @@ def train_classifier(num_epochs, config, data_dir=None, model_type='convolutiona
     parser.add_argument('--resolution', type=int, default=64)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_workers', type=int, default=8)
+
+    if model_type == "convolutional":
+        parser = ConvolutionalClassifier.add_model_specific_args(parser)
+    else:
+        parser = TransformerClassifier.add_model_specific_args(parser)
 
     config_args = []
     for key in config.keys():
@@ -53,11 +59,13 @@ def train_classifier(num_epochs, config, data_dir=None, model_type='convolutiona
     optimizer = torch.optim.Adam((p for p in model.parameters() if p.requires_grad), lr=args.lr)
 
     print("Starting train ...")
+    losses = []
     for epoch in range(num_epochs):
         print(f"{epoch=}")
         epoch_loss = 0
         epoch_correct = 0
         epoch_count = 0
+        epoch_steps = 0
         for idx, batch in enumerate(train_loader):
             # Send batch data to the gpu
             video, label = batch["video"], batch["label"]
@@ -67,18 +75,25 @@ def train_classifier(num_epochs, config, data_dir=None, model_type='convolutiona
 
             loss = criterion(predictions, label)
 
-            correct = predictions.argmax(axis=1) == label
-            acc = correct.sum().item() / correct.size(0)
-
-            epoch_correct += correct.sum().item()
-            epoch_count += correct.size(0)
-
-            epoch_loss += loss.item()
-
             loss.backward()
             torch.nn.utils.clip_grad_norm(model.parameters(), 0.5)
 
             optimizer.step()
+            losses.append(loss)
+
+            correct = predictions.argmax(axis=1) == label
+            epoch_correct += correct.sum().item()
+            epoch_count += correct.size(0)
+            epoch_loss += loss.item()
+
+            # print statistics
+            epoch_steps += 1
+            if epoch_steps % 100 == 99:  # print every 100 mini-batches
+                print(
+                    "[%d, %5d] loss: %.3f"
+                    % (epoch + 1, epoch_steps + 1, epoch_loss / epoch_steps)
+                )
+                epoch_loss = 0.0
 
         val_epoch_loss = 0
         val_epoch_correct = 0
@@ -91,46 +106,62 @@ def train_classifier(num_epochs, config, data_dir=None, model_type='convolutiona
                 predictions = model(video)
                 val_loss = criterion(predictions, label)
 
-                correct = predictions.argmax(axis=1) == labels
-                acc = correct.sum().item() / correct.size(0)
+                correct = predictions.argmax(axis=1) == label
 
                 val_epoch_correct += correct.sum().item()
                 val_epoch_count += correct.size(0)
-                val_epoch_loss += loss.item()
+                val_epoch_loss += val_loss.item()
+
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': val_epoch_loss,
+        }, os.path.join(data_dir, f"checkpoint_{epoch}.ckpt"))
 
         print(f"{epoch_loss=}")
         print(f"epoch accuracy: {epoch_correct / epoch_count}")
         print(f"{val_epoch_loss=}")
         print(f"test epoch accuracy: {val_epoch_correct / val_epoch_count}")
 
-    return model
-
+    return model, optimizer, val_epoch_loss
 
 
 def main(num_epochs, args, data_dir, model_type):
     torch.manual_seed(1234)
-    final_model = train_classifier(num_epochs, args, data_dir, model_type)
+    final_model, optimizer, final_loss = train_classifier(num_epochs, args, data_dir, model_type)
+    torch.save({
+        'epoch': num_epochs,
+        'model_state_dict': final_model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': final_loss,
+    }, os.path.join(data_dir, f"final_model.ckpt"))
+
 
 if __name__ == '__main__':
     data_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data"
-    model_type = "convolutional"
+    vqvae_path = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master\lightning_logs\version_23\checkpoints\epoch=60-step=188489.ckpt"
+    model_type = "transformer"
 
     # Config dict for convolutional classifier
+    """
     config = {
-        "kernel_size": 64,
-        "out_channels": 3,
-        "n_classes": 8,
-        "lr": 8e-4
+        "--vqvae": vqvae_path,
+        "--kernel_size": 64,
+        "--out_channels": 3,
+        "--n_classes": 8,
+        "--lr": 8e-4
     }
+    """
 
     # Config dict for transformer classifier
-    """
     config = {
-        "n_heads": 4,
-        "dim_feedforward": 2048,
-        "dropout": 0.2,
-        "num_layers": 4,
-        "lr": 8e-4
+        "--vqvae": vqvae_path,
+        "--n_heads": 2,
+        "--dim_feedforward": 512,
+        "--dropout": 0.2,
+        "--n_layers": 2,
+        "--lr": 7e-4
     }
-    """
-    main(num_epochs=50, args=config, data_path=data_folder, model_type=model_type)
+
+    main(num_epochs=50, args=config, data_dir=data_folder, model_type=model_type)

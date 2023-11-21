@@ -26,9 +26,14 @@ class Classifier(nn.Module):
 
         # Transformer classifier
         self.shape = self.vqvae.latent_shape
-
+        self.size = self.shape[0]*self.shape[1]*self.shape[2]
+        """
+        print("shape: ", self.shape)
+        print("n_heads: ", self.args.n_heads)
+        print("dim_feedforward: ", self.args.dim_feedforward)
+        """
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.shape,
+            d_model=self.size,
             nhead=self.args.n_heads,
             dim_feedforward=self.args.dim_feedforward,
             dropout=self.args.dropout,
@@ -38,13 +43,14 @@ class Classifier(nn.Module):
             num_layers=self.args.n_layers,
         )
 
-        self.classifier == nn.Linear(self.shape, self.args.n_classes)
-
-        self.save_hyperparameters()
+        self.classifier = nn.Linear(self.size, self.args.n_classes)
 
     def forward(self, x):
         with torch.no_grad():
-            x = self.vqvae.encoder(x)
+            targets, x = self.vqvae.encode(x, include_embeddings=True)
+            x = torch.flatten(x, start_dim=3, end_dim=4)
+            x = torch.flatten(x, start_dim=1, end_dim=2)
+            x = shift_dim(x, 1, -1)
         x - self.transformer_encoder(x)
         x = x.mean(dim=1)
         x = self.classifier(x)

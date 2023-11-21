@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from torch.nn import flatten
+from torch import flatten
 import torch.optim as optim
 import argparse
 import sys
-sys.path.append(r'C:\Users\Ray\Documents\MASc\BME1570\code\telerehab_exercise_feedback\VideoGPT-master')
+sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
 from videogpt.vqvae import VQVAE
 
 

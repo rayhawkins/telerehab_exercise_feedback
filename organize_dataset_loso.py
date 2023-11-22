@@ -33,8 +33,8 @@ from tqdm import tqdm
 import cv2
 from scipy.ndimage import zoom
 
-parent_folder = r"C:\Users\Ray\Documents\MASc\BME1570\Data\og_data"
-save_folder = r"C:\Users\Ray\Documents\MASc\BME1570\Data\gesture_sorted_data_loso"
+parent_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\video_data"
+save_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data_loso"
 test_ids = ["103", "214"]
 max_frames = None
 group_by_symmetry = False

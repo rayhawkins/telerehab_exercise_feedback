@@ -33,7 +33,7 @@ def classification_f1score(prediction, ground_truth):
     f1_metric = F1Score(num_classes=1, task=task)  # For binary classification, num_classes is 1
 
     # Compute F1 score
-    f1_score = f1_metric(predictions, ground_truth)
+    f1_score = f1_metric(prediction, ground_truth)
 
     print(f"F1 Score: {f1_score.item() * 100:.2f}%")
 
@@ -79,18 +79,16 @@ def create_confusion_matrix(ground_truth, prediction):
     # plt.figure(figsize=(12, 7))
     # sn.heatmap(df_cm, annot=True)
     # plt.savefig('output.png')
-classes = ('EFR', 'EFL', 'SFR', 'SFL', 'SAR',
-        'SAL', 'SFE', 'STR', 'STL')
-def plot_confusion_matrix(cf_matrix):
+
+
+def plot_confusion_matrix(cf_matrix, classes):
     # Create a confusion matrix plot from the matrix of confusion values
     df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])
     plt.figure(figsize=(12, 7))
     sns.heatmap(df_cm, annot=True)
     plt.savefig('output.png')
-    plt.plot(matrix)
+    # plt.plot(cf_matrix)
     return True
-
-
 
 # # Example usage
 # predictions = torch.tensor([1, 0, 1, 1, 0, 1, 0, 1])

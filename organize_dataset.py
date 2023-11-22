@@ -34,11 +34,12 @@ import cv2
 from scipy.ndimage import zoom
 
 parent_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\video_data"
-save_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data_gray"
+save_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data_incorrect"
 perc_test = 10
+incorrect = True
 max_frames = None
 group_by_symmetry = False
-grayscale = True  # set to true if to save videos as grayscale i.e. (t, h, w, 1)
+grayscale = False  # set to true if to save videos as grayscale i.e. (t, h, w, 1)
 rescale_size = None  # (16, 200, 200, 3)  # (t, h, w, c)
 fps = 5  # fps for saving, fps of the original dataset collected from the kinect sensor was 30 fps
 
@@ -54,8 +55,8 @@ else:
     warnings.warn("WARNING: target directory already exists, files may be overwritten.")
 if not os.path.exists(os.path.join(save_folder, "test")):
     os.mkdir(os.path.join(save_folder, "test"))
-    if not os.path.exists(os.path.join(save_folder, "train")):
-        os.mkdir(os.path.join(save_folder, "train"))
+if not os.path.exists(os.path.join(save_folder, "train")):
+    os.mkdir(os.path.join(save_folder, "train"))
 
 for this_gesture in np.unique(classes):
     train_gesture_folder = os.path.join(save_folder, "train", this_gesture)
@@ -77,12 +78,16 @@ for subfolder in os.listdir(parent_folder):
 
         this_gesture = video_folder.split("_")[2]
         correct_label = video_folder.split("_")[4]
-        if int(correct_label) != 1:  # Take only correctly performed repetitions
+        if not incorrect and int(correct_label) != 1:  # Take only correctly performed repetitions
             continue
+
         gesture_label = classes[int(this_gesture)]
 
         test_flag = np.random.randint(0, 100) < 10
-        if test_flag:
+        if incorrect and not test_flag and int(correct_label) != 2:  # Take correctly perform test and all incorrectly performed
+            continue
+
+        if test_flag or incorrect:
             save_path = os.path.join(save_folder, "test", gesture_label, video_folder + ".mp4")
         else:
             save_path = os.path.join(save_folder, "train", gesture_label, video_folder + ".mp4")

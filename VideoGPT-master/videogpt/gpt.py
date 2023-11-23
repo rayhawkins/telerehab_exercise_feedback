@@ -19,6 +19,7 @@ class VideoGPT(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.args = args
+        print(self.args.class_cond)
 
         # Load VQ-VAE and set all parameters to no grad
         from .vqvae import VQVAE

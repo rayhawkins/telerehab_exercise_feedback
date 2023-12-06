@@ -158,7 +158,7 @@ class VideoGPT(pl.LightningModule):
         self.log('val/loss', loss, prog_bar=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=2.5e-4, betas=(0.9, 0.999), eps=1e-6)
+        optimizer = torch.optim.Adam(self.parameters(), lr=7e-4, betas=(0.9, 0.999), eps=1e-6)
         assert hasattr(self.args, 'max_steps') and self.args.max_steps is not None, f"Must set max_steps argument"
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, self.args.max_steps)
         return [optimizer], [dict(scheduler=scheduler, interval='step', frequency=1)]

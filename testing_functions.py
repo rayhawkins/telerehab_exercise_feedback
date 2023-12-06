@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt  # For visualizations
 import torch
 from torchmetrics import Accuracy, F1Score
 from sklearn.metrics import confusion_matrix
+from matplotlib.colors import LinearSegmentedColormap
 
 # Some pseudocode for some functions that may be useful
 def classification_accuracy(prediction, ground_truth):
@@ -85,7 +86,8 @@ def plot_confusion_matrix(cf_matrix, classes):
     # Create a confusion matrix plot from the matrix of confusion values
     df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])
     plt.figure(figsize=(12, 7))
-    sns.heatmap(df_cm, annot=True)
+    cmap0 = LinearSegmentedColormap.from_list('', ['white', *plt.cm.magma_r(np.arange(255))])
+    sns.heatmap(df_cm, annot=True, cmap=cmap0, vmin=0)
     plt.savefig('output.png')
     # plt.plot(cf_matrix)
     return True

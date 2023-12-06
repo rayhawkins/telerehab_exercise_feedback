@@ -1,7 +1,6 @@
 import os
 import functools
 import argparse
-from videogpt.download import load_i3d_pretrained
 from tqdm import tqdm
 import numpy as np
 
@@ -9,6 +8,9 @@ import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
 
+import sys
+sys.path.append(r'C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master')
+from videogpt.download import load_i3d_pretrained
 from videogpt.fvd.fvd import get_fvd_logits, frechet_distance
 from videogpt import VideoData, VideoGPT, load_videogpt
 

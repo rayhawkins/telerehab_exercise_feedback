@@ -7,7 +7,8 @@ from videogpt import VideoGPT, VideoData
 
 
 def main():
-    pl.seed_everything(1234)
+    # pl.seed_everything(1234)
+    pl.seed_everything(4321)
 
     parser = argparse.ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)

@@ -135,7 +135,7 @@ def train_classifier(num_epochs, config, data_dir=None, model_type='convolutiona
 
 
 def main(num_epochs, args, data_dir, model_type, ckpt=None):
-    torch.manual_seed(1234)
+    torch.manual_seed(4321)
     final_model, optimizer, final_loss = train_classifier(num_epochs, args, data_dir, model_type, ckpt)
     torch.save({
         'epoch': num_epochs,
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     data_folder = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\gesture_sorted_data"
     vqvae_path = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\VideoGPT-master\lightning_logs\version_23\checkpoints\epoch=60-step=188489.ckpt"
     model_type = "convolutional"
-    checkpoint = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\convolutional_classifier\checkpoint_50.ckpt"
+    checkpoint = None
 
     # Config dict for convolutional classifier
     config = {
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         "--vqvae": vqvae_path,
         "--kernel_size": 3,
         "--out_channels": 3,
-        "--n_classes": 8,
+        "--n_classes": 9,
         "--lr": 8e-4
     }
 

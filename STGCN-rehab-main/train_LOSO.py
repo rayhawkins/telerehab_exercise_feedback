@@ -20,8 +20,9 @@ import os
 import argparse
 
 # Add the arguments
-parent_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\skeleton_data_gestures_combined_correct_sorted_LOSO"
-save_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\STGCN-rehab-main\gestures_combined_networks_LOSO"
+parent_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\skeleton_data_gestures_combined_correct_sorted_LMSO"
+save_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\STGCN-rehab-main\gestures_combined_networks_LMSO"
+use_class_weights = True
 lr = 0.0001
 epoch = 1000
 batch_size = 32
@@ -32,7 +33,7 @@ gestures = ["EF", "SF", "SA", "SFE", "ST"]
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-for this_patient in os.listdir(parent_dir)[8:]:
+for this_patient in os.listdir(parent_dir):
     print(this_patient)
     if not os.path.isdir(os.path.join(parent_dir, this_patient)):
         continue
@@ -51,8 +52,11 @@ for this_patient in os.listdir(parent_dir)[8:]:
         """Split the data into training and validation sets while preserving the distribution"""
         train_x, train_y = train_data_loader.scaled_x, train_data_loader.scaled_y
         n_classes = len(np.unique(train_y))
-        class_weights = {'0': (1. / np.sum(train_y == 0)) * (len(train_y) / 2.),
-                         '1': (1. / np.sum(train_y == 1)) * (len(train_y) / 2.)}
+        if use_class_weights:
+            class_weights = {0: (1. / np.sum(train_y[:, 0] == 0)) * (len(train_y) / 2.),
+                             1: (1. / np.sum(train_y[:, 0] == 1)) * (len(train_y) / 2.)}
+        else:
+            class_weights = None
 
         save_name = os.path.join(save_dir, this_patient, f"model_{this_gesture}.hdf5")
 

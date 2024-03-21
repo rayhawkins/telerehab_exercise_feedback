@@ -76,7 +76,6 @@ class Sgcn_Lstm():
     def train(self):
         earlystopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         checkpoint = ModelCheckpoint(self.save_name, monitor='val_loss', save_best_only=True, mode='auto', period=1)
-        print(self.class_weight)
         history = self.model.fit(self.train_x, self.train_y, validation_split=0.1, epochs=self.epoach, batch_size=self.batch_size,
                                  callbacks=[checkpoint, earlystopping], class_weight=self.class_weight)
         return history

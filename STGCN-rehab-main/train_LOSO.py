@@ -20,8 +20,8 @@ import os
 import argparse
 
 # Add the arguments
-parent_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\skeleton_data_gestures_combined_correct_sorted_LMSO"
-save_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\STGCN-rehab-main\gestures_combined_networks_LMSO"
+parent_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\data\skeleton_data_gestures_combined_correct_sorted_LOSO"
+save_dir = r"C:\Users\rfgla\Documents\Ray\telerehab_exercise_feedback\STGCN-rehab-main\gestures_combined_networks_LOSO_class_weights"
 use_class_weights = True
 lr = 0.0001
 epoch = 1000
@@ -53,11 +53,12 @@ for this_patient in os.listdir(parent_dir):
         train_x, train_y = train_data_loader.scaled_x, train_data_loader.scaled_y
         n_classes = len(np.unique(train_y))
         if use_class_weights:
-            class_weights = {0: (1. / np.sum(train_y[:, 0] == 0)) * (len(train_y) / 2.),
-                             1: (1. / np.sum(train_y[:, 0] == 1)) * (len(train_y) / 2.)}
+            class_weights = {0: (1. / np.sum(train_y[:, 0] == 1)) * (len(train_y) / 2.),
+                             1: (1. / np.sum(train_y[:, 1] == 1)) * (len(train_y) / 2.)}
         else:
             class_weights = None
 
+        print(class_weights)
         save_name = os.path.join(save_dir, this_patient, f"model_{this_gesture}.hdf5")
 
         """Train the algorithm"""
